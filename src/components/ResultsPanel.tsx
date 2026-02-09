@@ -223,9 +223,6 @@ function V3Table({ results }: { results: ValidationResults }) {
   }
 
   const displayMonths = results.v3[0]?.half === 'H1' ? H1_MONTHS : H2_MONTHS;
-  const anyHasY2Y3 = results.v3.some((r) => r.hasY2Y3);
-  const anyHasComp2 = results.v3.some((r) => r.hasComp2);
-  const anyHasComp2Y2Y3 = results.v3.some((r) => r.hasComp2Y2Y3);
 
   return (
     <table className="w-full text-sm">

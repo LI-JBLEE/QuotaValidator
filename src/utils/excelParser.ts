@@ -200,7 +200,7 @@ export function parseQuotaFile(data: ArrayBuffer): ParsedQuotaFile {
     if (lower === 'instructions') continue;
 
     const sheetMeta = wb.Workbook?.Sheets?.[idx];
-    if (sheetMeta && sheetMeta.Hidden && sheetMeta.Hidden !== 0) continue;
+    if (sheetMeta && sheetMeta.Hidden && Number(sheetMeta.Hidden) !== 0) continue;
 
     if (!lower.endsWith('quota')) continue;
 
