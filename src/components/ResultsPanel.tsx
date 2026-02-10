@@ -150,12 +150,12 @@ function V1Table({ results }: { results: ValidationResults }) {
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs text-gray-500 uppercase">
-          <th className="pb-2 pr-3">Sheet</th>
-          <th className="pb-2 pr-3">Row</th>
-          <th className="pb-2 pr-3">EID</th>
-          <th className="pb-2 pr-3">Name</th>
-          <th className="pb-2 pr-3">Status</th>
-          <th className="pb-2">Reason</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Sheet</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Row</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">EID</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Name</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Status</th>
+          <th className="sticky top-0 bg-white pb-2 z-10">Reason</th>
         </tr>
       </thead>
       <tbody>
@@ -187,11 +187,11 @@ function V2Table({ results }: { results: ValidationResults }) {
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs text-gray-500 uppercase">
-          <th className="pb-2 pr-3">EID</th>
-          <th className="pb-2 pr-3">Count</th>
-          <th className="pb-2 pr-3">Sheet</th>
-          <th className="pb-2 pr-3">Row</th>
-          <th className="pb-2">Name</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">EID</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Count</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Sheet</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Row</th>
+          <th className="sticky top-0 bg-white pb-2 z-10">Name</th>
         </tr>
       </thead>
       <tbody>
@@ -228,15 +228,15 @@ function V3Table({ results }: { results: ValidationResults }) {
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs text-gray-500 uppercase">
-          <th className="pb-2 pr-2">Sheet</th>
-          <th className="pb-2 pr-2">Row</th>
-          <th className="pb-2 pr-2">EID</th>
-          <th className="pb-2 pr-2">Name</th>
-          <th className="pb-2 pr-2">QSD</th>
-          <th className="pb-2 pr-2">Type</th>
-          <th className="pb-2 pr-2">Missing</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">Sheet</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">Row</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">EID</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">Name</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">QSD</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">Type</th>
+          <th className="sticky top-0 bg-white pb-2 pr-2 z-10">Missing</th>
           {displayMonths.map((m) => (
-            <th key={m} className="pb-2 pr-1 text-right">{m}</th>
+            <th key={m} className="sticky top-0 bg-white pb-2 pr-1 text-right z-10">{m}</th>
           ))}
         </tr>
       </thead>
