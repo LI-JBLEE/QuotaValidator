@@ -1,7 +1,7 @@
 import type { ValidationResults } from '../types';
 import { H1_MONTHS, H2_MONTHS } from '../types';
 
-function escapeCsv(val: unknown): string {
+export function escapeCsv(val: unknown): string {
   if (val === null || val === undefined) return '';
   const str = String(val);
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -10,11 +10,11 @@ function escapeCsv(val: unknown): string {
   return str;
 }
 
-function toCsvRow(fields: unknown[]): string {
+export function toCsvRow(fields: unknown[]): string {
   return fields.map(escapeCsv).join(',');
 }
 
-function downloadCsv(filename: string, content: string) {
+export function downloadCsv(filename: string, content: string) {
   // Add BOM for Excel UTF-8 compatibility
   const bom = '\uFEFF';
   const blob = new Blob([bom + content], { type: 'text/csv;charset=utf-8;' });

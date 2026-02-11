@@ -3,7 +3,7 @@ import type { QuotaRecord, ReferenceRecord, MonthlyQuotas } from '../types';
 
 // Convert Excel serial number to a UTC Date without timezone drift.
 // Excel epoch: serial 1 = Jan 1, 1900 (with Lotus 1-2-3 leap year bug for serial <= 59).
-function excelSerialToDate(serial: number): Date {
+export function excelSerialToDate(serial: number): Date {
   // Adjust for the fake Feb 29, 1900 (Lotus bug)
   const adjusted = serial > 59 ? serial - 1 : serial;
   // Serial 1 = Jan 1, 1900, so base is Dec 31, 1899
@@ -11,7 +11,7 @@ function excelSerialToDate(serial: number): Date {
   return new Date(ms);
 }
 
-function parseDate(value: unknown): Date | null {
+export function parseDate(value: unknown): Date | null {
   if (value == null) return null;
   if (typeof value === 'number' && value > 1) return excelSerialToDate(value);
   if (typeof value === 'string') {
@@ -21,11 +21,11 @@ function parseDate(value: unknown): Date | null {
   return null;
 }
 
-function cellVal(row: unknown[], colIndex: number): unknown {
+export function cellVal(row: unknown[], colIndex: number): unknown {
   return row[colIndex] ?? null;
 }
 
-function strVal(row: unknown[], colIndex: number): string {
+export function strVal(row: unknown[], colIndex: number): string {
   const v = cellVal(row, colIndex);
   if (v == null) return '';
   return String(v).trim();
