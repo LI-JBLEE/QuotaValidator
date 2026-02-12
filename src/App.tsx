@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import LtsLssValidationTab from './components/LtsLssValidationTab';
 import LmsValidationTab from './components/LmsValidationTab';
+import LmsOverlayTab from './components/LmsOverlayTab';
 
-type AppTab = 'lts-lss' | 'lms';
+type AppTab = 'lts-lss' | 'lms' | 'lms-overlay';
 
 function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('lts-lss');
@@ -30,7 +31,7 @@ function App() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            LTS / LSS Validation
+            LTS / LSS
           </button>
           <button
             onClick={() => setActiveTab('lms')}
@@ -40,17 +41,30 @@ function App() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            LMS Validation
+            LMS
+          </button>
+          <button
+            onClick={() => setActiveTab('lms-overlay')}
+            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors ${
+              activeTab === 'lms-overlay'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            LMS Overlay
           </button>
         </div>
       </div>
 
-      {/* Tab Content — both mounted, hidden via CSS to preserve state */}
+      {/* Tab Content — all mounted, hidden via CSS to preserve state */}
       <div className={activeTab === 'lts-lss' ? '' : 'hidden'}>
         <LtsLssValidationTab />
       </div>
       <div className={activeTab === 'lms' ? '' : 'hidden'}>
         <LmsValidationTab />
+      </div>
+      <div className={activeTab === 'lms-overlay' ? '' : 'hidden'}>
+        <LmsOverlayTab />
       </div>
     </div>
   );

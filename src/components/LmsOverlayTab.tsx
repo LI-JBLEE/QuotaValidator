@@ -1,42 +1,43 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import FileUpload from './FileUpload';
-import LmsConfigPanel from './LmsConfigPanel';
-import LmsResultsPanel from './LmsResultsPanel';
-import { parseLmsQuotaFile, generateLmsProcessingMonths } from '../utils/lmsExcelParser';
-import { parseReferenceFile } from '../utils/excelParser';
-import { runLmsValidation } from '../utils/lmsValidators';
-import type { LmsQuotaRecord, LmsValidationResults } from '../lmsTypes';
-import type { ReferenceRecord, Region } from '../types';
+import ConfigPanel from './ConfigPanel';
+import OverlayResultsPanel from './OverlayResultsPanel';
+import { parseQuotaFile, parseReferenceFile } from '../utils/excelParser';
+import { runOverlayValidation } from '../utils/overlayValidators';
+import type { OverlayValidationResults } from '../utils/overlayValidators';
+import type { QuotaRecord, ReferenceRecord, Region } from '../types';
 
-export default function LmsValidationTab() {
+export default function LmsOverlayTab() {
   // File state
   const [quotaFileName, setQuotaFileName] = useState('');
   const [refFileName, setRefFileName] = useState('');
-  const [lmsRecords, setLmsRecords] = useState<LmsQuotaRecord[]>([]);
+  const [quotaRecords, setQuotaRecords] = useState<QuotaRecord[]>([]);
   const [refRecords, setRefRecords] = useState<ReferenceRecord[]>([]);
+  const [submissionMonths, setSubmissionMonths] = useState<string[]>([]);
 
   // Config state
-  const processingMonths = useMemo(() => generateLmsProcessingMonths(), []);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const months = generateLmsProcessingMonths();
-    return months.length > 0 ? months[months.length - 1] : '';
-  });
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<Region>('APAC');
 
   // Validation state
-  const [results, setResults] = useState<LmsValidationResults | null>(null);
+  const [results, setResults] = useState<OverlayValidationResults | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLmsQuotaFile = useCallback((data: ArrayBuffer, fileName: string) => {
+  const handleQuotaFile = useCallback((data: ArrayBuffer, fileName: string) => {
     try {
       setError('');
-      const records = parseLmsQuotaFile(data);
-      setLmsRecords(records);
+      const parsed = parseQuotaFile(data);
+      setQuotaRecords(parsed.records);
+      setSubmissionMonths(parsed.submissionMonths);
       setQuotaFileName(fileName);
+      // Auto-select the latest month
+      if (parsed.submissionMonths.length > 0) {
+        setSelectedMonth(parsed.submissionMonths[parsed.submissionMonths.length - 1]);
+      }
       setResults(null);
     } catch (e) {
-      setError(`Failed to parse LMS Quota file: ${e instanceof Error ? e.message : String(e)}`);
+      setError(`Failed to parse Quota file: ${e instanceof Error ? e.message : String(e)}`);
     }
   }, []);
 
@@ -53,12 +54,13 @@ export default function LmsValidationTab() {
   }, []);
 
   const handleRunValidation = useCallback(() => {
-    if (!lmsRecords.length || !refRecords.length || !selectedMonth) return;
+    if (!quotaRecords.length || !refRecords.length || !selectedMonth) return;
     setIsRunning(true);
     setError('');
+    // Use setTimeout to allow UI to update with spinner
     setTimeout(() => {
       try {
-        const res = runLmsValidation(lmsRecords, refRecords, selectedMonth, selectedRegion);
+        const res = runOverlayValidation(quotaRecords, refRecords, selectedMonth, selectedRegion);
         setResults(res);
       } catch (e) {
         setError(`Validation error: ${e instanceof Error ? e.message : String(e)}`);
@@ -66,21 +68,22 @@ export default function LmsValidationTab() {
         setIsRunning(false);
       }
     }, 50);
-  }, [lmsRecords, refRecords, selectedMonth, selectedRegion]);
+  }, [quotaRecords, refRecords, selectedMonth, selectedRegion]);
 
   const handleReset = useCallback(() => {
     setQuotaFileName('');
     setRefFileName('');
-    setLmsRecords([]);
+    setQuotaRecords([]);
     setRefRecords([]);
-    setSelectedMonth(processingMonths.length > 0 ? processingMonths[processingMonths.length - 1] : '');
+    setSubmissionMonths([]);
+    setSelectedMonth('');
     setSelectedRegion('APAC');
     setResults(null);
     setIsRunning(false);
     setError('');
-  }, [processingMonths]);
+  }, []);
 
-  const canRun = lmsRecords.length > 0 && refRecords.length > 0 && !!selectedMonth;
+  const canRun = quotaRecords.length > 0 && refRecords.length > 0 && !!selectedMonth;
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
@@ -103,7 +106,7 @@ export default function LmsValidationTab() {
           <FileUpload
             label="Quota File"
             description="Quota File (.xlsx)"
-            onFileLoaded={handleLmsQuotaFile}
+            onFileLoaded={handleQuotaFile}
             fileName={quotaFileName}
           />
           <FileUpload
@@ -115,7 +118,7 @@ export default function LmsValidationTab() {
         </div>
         {quotaFileName && (
           <p className="text-xs text-gray-400 mt-3">
-            {lmsRecords.length} LMS records loaded
+            {quotaRecords.length} total records loaded from {submissionMonths.length} submission month(s)
           </p>
         )}
         {refFileName && (
@@ -126,8 +129,8 @@ export default function LmsValidationTab() {
       </div>
 
       {/* Step 2: Configuration */}
-      <LmsConfigPanel
-        processingMonths={processingMonths}
+      <ConfigPanel
+        submissionMonths={submissionMonths}
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
         selectedRegion={selectedRegion}
@@ -167,7 +170,7 @@ export default function LmsValidationTab() {
       )}
 
       {/* Results */}
-      {results && <LmsResultsPanel results={results} />}
+      {results && <OverlayResultsPanel results={results} />}
     </main>
   );
 }

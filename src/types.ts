@@ -127,3 +127,63 @@ export function getCountriesForRegion(region: Region): string[] {
     .filter(([, r]) => r === region)
     .map(([country]) => country);
 }
+
+// ISO 2-letter country codes to Region mapping (for Market Segment fallback)
+export const COUNTRY_CODE_REGION_MAP: Record<string, Region> = {
+  AU: 'APAC',
+  AT: 'EMEAL',
+  BE: 'EMEAL',
+  BR: 'EMEAL',
+  CA: 'NAMER',
+  CN: 'APAC',
+  FR: 'EMEAL',
+  DE: 'EMEAL',
+  HK: 'APAC',
+  IN: 'APAC',
+  IE: 'EMEAL',
+  IL: 'EMEAL',
+  IT: 'EMEAL',
+  JP: 'APAC',
+  MY: 'APAC',
+  MX: 'EMEAL',
+  NL: 'EMEAL',
+  SG: 'APAC',
+  ES: 'EMEAL',
+  SE: 'EMEAL',
+  AE: 'EMEAL',
+  GB: 'EMEAL',
+  UK: 'EMEAL',
+  US: 'NAMER',
+  KR: 'APAC',
+  TW: 'APAC',
+  TH: 'APAC',
+  NZ: 'APAC',
+  PH: 'APAC',
+  ID: 'APAC',
+  VN: 'APAC',
+  AR: 'EMEAL',
+  CL: 'EMEAL',
+  CO: 'EMEAL',
+  PE: 'EMEAL',
+  ZA: 'EMEAL',
+  SA: 'EMEAL',
+  TR: 'EMEAL',
+  PL: 'EMEAL',
+  CZ: 'EMEAL',
+  NO: 'EMEAL',
+  DK: 'EMEAL',
+  FI: 'EMEAL',
+  PT: 'EMEAL',
+  CH: 'EMEAL',
+  RO: 'EMEAL',
+  HU: 'EMEAL',
+};
+
+// Market Segment values that directly map to a Region
+export const MARKET_SEGMENT_REGION_MAP: Record<string, Region> = {
+  APAC: 'APAC',
+  EMEAL: 'EMEAL',
+  EMEA: 'EMEAL',
+  LATAM: 'EMEAL',
+  NAMER: 'NAMER',
+};
