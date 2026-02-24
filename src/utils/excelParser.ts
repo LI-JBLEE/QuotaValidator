@@ -235,6 +235,10 @@ export function parseQuotaFile(data: ArrayBuffer): ParsedQuotaFile {
 
       const eid = strVal(row, colIdx.eid);
       const name = strVal(row, colIdx.name);
+
+      // Skip month-separator rows (Submission Month filled but EID and Name both blank)
+      if (!eid && !name) continue;
+
       const level = strVal(row, colIdx.level);
       const repRegion = strVal(row, colIdx.repRegion);
       const dualMetric = colIdx.dualMetric >= 0 ? strVal(row, colIdx.dualMetric) : '';
