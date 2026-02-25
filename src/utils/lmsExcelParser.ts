@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { parseDate, cellVal, strVal } from './excelParser';
+import { parseDate, cellVal, strVal, normalizeEid } from './excelParser';
 import type { LmsQuotaRecord, LmsMonthlyQuotas } from '../lmsTypes';
 
 // Fixed column indices for LMS file (0-based)
@@ -67,7 +67,7 @@ export function parseLmsQuotaFile(data: ArrayBuffer): LmsQuotaRecord[] {
     const row = rows[i];
     if (!row) continue;
 
-    const eid = strVal(row, LMS_COLS.employeeId);
+    const eid = normalizeEid(strVal(row, LMS_COLS.employeeId));
     if (!eid) continue;
 
     records.push({

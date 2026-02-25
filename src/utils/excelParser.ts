@@ -31,6 +31,14 @@ export function strVal(row: unknown[], colIndex: number): string {
   return String(v).trim();
 }
 
+/** Normalize an EID string to 6 digits by zero-padding if it's a pure number shorter than 6 digits. */
+export function normalizeEid(raw: string): string {
+  if (/^\d+$/.test(raw) && raw.length < 6) {
+    return raw.padStart(6, '0');
+  }
+  return raw;
+}
+
 export interface ParsedQuotaFile {
   records: QuotaRecord[];
   submissionMonths: string[]; // formatted as "Mon-YY"
@@ -233,7 +241,7 @@ export function parseQuotaFile(data: ArrayBuffer): ParsedQuotaFile {
       const monthLabel = formatSubmissionMonth(smDate);
       submissionMonthSet.add(monthLabel);
 
-      const eid = strVal(row, colIdx.eid);
+      const eid = normalizeEid(strVal(row, colIdx.eid));
       const name = strVal(row, colIdx.name);
 
       // Skip month-separator rows (Submission Month filled but EID and Name both blank)
@@ -336,7 +344,7 @@ export function parseReferenceFile(data: ArrayBuffer): ReferenceRecord[] {
     const row = rows[i];
     if (!row) continue;
 
-    const eid = strVal(row, eidCol);
+    const eid = normalizeEid(strVal(row, eidCol));
     if (!eid) continue;
 
     records.push({
