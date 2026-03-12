@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "appId": "3d1cc8df-a854-4de1-8f98-386bbad75d25",
+  "appDisplayName": "Quota Validation App",
+  "region": "prod",
+  "environmentId": "8c0f0998-b44d-e8f1-b0b8-97534410a116",
+  "description": "",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {},
+  "databaseReferences": {}
+}

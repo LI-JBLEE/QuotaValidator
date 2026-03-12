@@ -1,12 +1,10 @@
 import { Fragment, useState } from 'react';
-import type { V3DisplayLabels, ValidationResults } from '../types';
-import { DEFAULT_V3_DISPLAY_LABELS, H1_MONTHS, H2_MONTHS } from '../types';
-import { exportV1Results, exportV2Results, exportV3Results, exportAllResults } from '../utils/csvExport';
+import { H1_MONTHS, H2_MONTHS } from '../types';
+import type { OverlayValidationResults, RegionMatchType } from '../utils/overlayValidators';
+import { exportOverlayV1Results, exportOverlayV2Results, exportOverlayV3Results, exportAllOverlayResults } from '../utils/overlayCsvExport';
 
-interface ResultsPanelProps {
-  results: ValidationResults;
-  v3Labels?: Partial<V3DisplayLabels>;
-  v3Description?: string;
+interface OverlayResultsPanelProps {
+  results: OverlayValidationResults;
 }
 
 type Tab = 'v1' | 'v2' | 'v3';
@@ -17,17 +15,16 @@ const STATUS_BADGE: Record<string, string> = {
   skip: 'bg-yellow-100 text-yellow-800',
 };
 
-export default function ResultsPanel({
-  results,
-  v3Labels,
-  v3Description,
-}: ResultsPanelProps) {
+const REGION_BADGE: Record<RegionMatchType, { bg: string; label: string }> = {
+  scr: { bg: 'bg-green-100 text-green-700', label: 'SCR' },
+  segment_direct: { bg: 'bg-blue-100 text-blue-700', label: 'Segment' },
+  segment_country_code: { bg: 'bg-purple-100 text-purple-700', label: 'Code' },
+  unknown: { bg: 'bg-orange-100 text-orange-700', label: 'Unknown' },
+};
+
+export default function OverlayResultsPanel({ results }: OverlayResultsPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('v1');
   const { summary } = results;
-  const resolvedV3Labels: V3DisplayLabels = {
-    ...DEFAULT_V3_DISPLAY_LABELS,
-    ...v3Labels,
-  };
 
   const tabs: { key: Tab; label: string; count: number; color: string }[] = [
     {
@@ -96,25 +93,25 @@ export default function ResultsPanel({
       </div>
 
       {/* Tab Description */}
-      <TabDescription tab={activeTab} v3Description={v3Description} />
+      <TabDescription tab={activeTab} />
 
       {/* Tab Content */}
       <div className="p-4 max-h-[500px] overflow-auto">
         {activeTab === 'v1' && <V1Table results={results} />}
         {activeTab === 'v2' && <V2Table results={results} />}
-        {activeTab === 'v3' && <V3Table results={results} labels={resolvedV3Labels} />}
+        {activeTab === 'v3' && <V3Table results={results} />}
       </div>
 
       {/* Export Buttons */}
       <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex gap-3 flex-wrap">
-        <ExportBtn label="Export All (CSV)" onClick={() => exportAllResults(results, resolvedV3Labels)} />
-        <ExportBtn label="V1 - Failed Only" onClick={() => exportV1Results(results, 'fail')} />
-        <ExportBtn label="V1 - All" onClick={() => exportV1Results(results, 'all')} />
+        <ExportBtn label="Export All (CSV)" onClick={() => exportAllOverlayResults(results)} />
+        <ExportBtn label="V1 - Failed Only" onClick={() => exportOverlayV1Results(results, 'fail')} />
+        <ExportBtn label="V1 - All" onClick={() => exportOverlayV1Results(results, 'all')} />
         {results.v2.length > 0 && (
-          <ExportBtn label="V2 - Duplicates" onClick={() => exportV2Results(results)} />
+          <ExportBtn label="V2 - Duplicates" onClick={() => exportOverlayV2Results(results)} />
         )}
         {results.v3.length > 0 && (
-          <ExportBtn label="V3 - Missing Quota" onClick={() => exportV3Results(results, resolvedV3Labels)} />
+          <ExportBtn label="V3 - Missing Quota" onClick={() => exportOverlayV3Results(results)} />
         )}
       </div>
     </div>
@@ -122,16 +119,16 @@ export default function ResultsPanel({
 }
 
 const TAB_DESCRIPTIONS: Record<Tab, string> = {
-  v1: 'Verifies that each EID exists in the reference file with Active Status = "Yes", On Leave = blank, and Country within the selected region.',
-  v2: 'Checks for duplicate EIDs across all Quota sheets within the selected submission month.',
-  v3: 'Ensures monthly quota amounts (Comp1 Y1, Y2&Y3) are populated from the Quota Start Date onward within the fiscal half. For DMC records, also validates Comp2 Y1 and Y2&Y3. H1 (Jul\u2013Dec) for submission months Jul\u2013Dec; H2 (Jan\u2013Jun) for submission months Jan\u2013Jun. Flags records with missing or zero values.',
+  v1: 'Verifies that each EID exists in the reference file with Active Status = "Yes", On Leave = blank, and Country within the selected region. Records are filtered by region using SCR country, Market Segment, or country code fallback.',
+  v2: 'Checks for duplicate EIDs across all Quota sheets within the selected submission month (filtered by region).',
+  v3: 'Ensures monthly quota amounts are populated from the Quota Start Date onward within the fiscal half (filtered by region).',
 };
 
-function TabDescription({ tab, v3Description }: { tab: Tab; v3Description?: string }) {
+function TabDescription({ tab }: { tab: Tab }) {
   return (
     <div className="mx-4 mt-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-700 leading-relaxed">
       <span className="font-semibold mr-1">i</span>
-      {tab === 'v3' && v3Description ? v3Description : TAB_DESCRIPTIONS[tab]}
+      {TAB_DESCRIPTIONS[tab]}
     </div>
   );
 }
@@ -150,7 +147,19 @@ function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function V1Table({ results }: { results: ValidationResults }) {
+function RegionBadge({ matchType, comment }: { matchType: RegionMatchType; comment: string }) {
+  const badge = REGION_BADGE[matchType];
+  return (
+    <span
+      className={`px-1.5 py-0.5 rounded text-xs font-medium ${badge.bg} cursor-help`}
+      title={comment}
+    >
+      {badge.label}
+    </span>
+  );
+}
+
+function V1Table({ results }: { results: OverlayValidationResults }) {
   const failAndSkip = results.v1.filter((r) => r.status !== 'pass');
   if (failAndSkip.length === 0) {
     return <EmptyState message="All EID reference checks passed!" />;
@@ -164,8 +173,10 @@ function V1Table({ results }: { results: ValidationResults }) {
           <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Row</th>
           <th className="sticky top-0 bg-white pb-2 pr-3 z-10">EID</th>
           <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Name</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Segment</th>
           <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Status</th>
-          <th className="sticky top-0 bg-white pb-2 z-10">Reason</th>
+          <th className="sticky top-0 bg-white pb-2 pr-3 z-10">Reason</th>
+          <th className="sticky top-0 bg-white pb-2 z-10">Region</th>
         </tr>
       </thead>
       <tbody>
@@ -175,12 +186,16 @@ function V1Table({ results }: { results: ValidationResults }) {
             <td className="py-2 pr-3 text-gray-600">{r.record.row}</td>
             <td className="py-2 pr-3 font-mono text-gray-800">{r.record.eid || '-'}</td>
             <td className="py-2 pr-3 text-gray-800 max-w-[200px] truncate">{r.record.name}</td>
+            <td className="py-2 pr-3 text-gray-600 text-xs">{r.record.repRegion}</td>
             <td className="py-2 pr-3">
               <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_BADGE[r.status]}`}>
                 {r.status.toUpperCase()}
               </span>
             </td>
-            <td className="py-2 text-gray-600 text-xs">{r.reason}</td>
+            <td className="py-2 pr-3 text-gray-600 text-xs">{r.reason}</td>
+            <td className="py-2">
+              <RegionBadge matchType={r.regionInfo.matchType} comment={r.regionInfo.comment} />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -188,7 +203,7 @@ function V1Table({ results }: { results: ValidationResults }) {
   );
 }
 
-function V2Table({ results }: { results: ValidationResults }) {
+function V2Table({ results }: { results: OverlayValidationResults }) {
   if (results.v2.length === 0) {
     return <EmptyState message="No duplicate EIDs found!" />;
   }
@@ -227,13 +242,7 @@ function V2Table({ results }: { results: ValidationResults }) {
   );
 }
 
-function V3Table({
-  results,
-  labels,
-}: {
-  results: ValidationResults;
-  labels: V3DisplayLabels;
-}) {
+function V3Table({ results }: { results: OverlayValidationResults }) {
   if (results.v3.length === 0) {
     return <EmptyState message="All quota amounts are properly filled!" />;
   }
@@ -254,6 +263,7 @@ function V3Table({
           {displayMonths.map((m) => (
             <th key={m} className="sticky top-0 bg-white pb-2 pr-1 text-right z-10">{m}</th>
           ))}
+          <th className="sticky top-0 bg-white pb-2 pl-2 z-10">Region</th>
         </tr>
       </thead>
       <tbody>
@@ -269,6 +279,7 @@ function V3Table({
           const showY2 = r.hasY2Y3 && r.missingMonthsY2Y3.length > 0;
           const showComp2 = r.hasComp2 && r.missingMonthsComp2.length > 0;
           const showComp2Y2 = r.hasComp2Y2Y3 && r.missingMonthsComp2Y2Y3.length > 0;
+          const rowCount = [showY1, showY2, showComp2, showComp2Y2].filter(Boolean).length;
           let isFirstRow = true;
 
           const infoCell = (show: boolean) => {
@@ -285,9 +296,19 @@ function V3Table({
           const c2Info = infoCell(showComp2);
           const c2y2Info = infoCell(showComp2Y2);
 
+          let regionRendered = false;
+          const renderRegion = () => {
+            if (regionRendered) return null;
+            regionRendered = true;
+            return (
+              <td className="py-2 pl-2" rowSpan={rowCount}>
+                <RegionBadge matchType={r.regionInfo.matchType} comment={r.regionInfo.comment} />
+              </td>
+            );
+          };
+
           return (
             <Fragment key={i}>
-              {/* Comp1 Y1 row */}
               {showY1 && (
                 <tr className="border-t border-gray-100">
                   <td className="py-2 pr-2 text-gray-600">{y1Info!.sheet}</td>
@@ -296,7 +317,7 @@ function V3Table({
                   <td className="py-2 pr-2 text-gray-800 max-w-[130px] truncate">{y1Info!.name}</td>
                   <td className="py-2 pr-2 text-gray-600 text-xs">{y1Info!.qs}</td>
                   <td className="py-2 pr-2">
-                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">{labels.primary}</span>
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Y1</span>
                   </td>
                   <td className="py-2 pr-2">
                     <span className="text-xs text-red-600 font-medium">{r.missingMonths.join(', ')}</span>
@@ -306,9 +327,9 @@ function V3Table({
                       {formatQuotaVal(r.quotaValues[m])}
                     </td>
                   ))}
+                  {renderRegion()}
                 </tr>
               )}
-              {/* Comp1 Y2&Y3 row */}
               {showY2 && (
                 <tr className="bg-gray-50/50">
                   <td className="py-2 pr-2 text-gray-600">{y2Info!.sheet}</td>
@@ -317,7 +338,7 @@ function V3Table({
                   <td className="py-2 pr-2 text-gray-800 max-w-[130px] truncate">{y2Info!.name}</td>
                   <td className="py-2 pr-2 text-gray-600 text-xs">{y2Info!.qs}</td>
                   <td className="py-2 pr-2">
-                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">{labels.primarySecondary}</span>
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">Y2&Y3</span>
                   </td>
                   <td className="py-2 pr-2">
                     <span className="text-xs text-red-600 font-medium">{r.missingMonthsY2Y3.join(', ')}</span>
@@ -327,9 +348,9 @@ function V3Table({
                       {formatQuotaVal(r.quotaValuesY2Y3[m])}
                     </td>
                   ))}
+                  {renderRegion()}
                 </tr>
               )}
-              {/* Comp2 Y1 row */}
               {showComp2 && (
                 <tr className="bg-purple-50/30">
                   <td className="py-2 pr-2 text-gray-600">{c2Info!.sheet}</td>
@@ -338,7 +359,7 @@ function V3Table({
                   <td className="py-2 pr-2 text-gray-800 max-w-[130px] truncate">{c2Info!.name}</td>
                   <td className="py-2 pr-2 text-gray-600 text-xs">{c2Info!.qs}</td>
                   <td className="py-2 pr-2">
-                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">{labels.secondary}</span>
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">C2:Y1</span>
                   </td>
                   <td className="py-2 pr-2">
                     <span className="text-xs text-red-600 font-medium">{r.missingMonthsComp2.join(', ')}</span>
@@ -348,9 +369,9 @@ function V3Table({
                       {formatQuotaVal(r.quotaValuesComp2[m])}
                     </td>
                   ))}
+                  {renderRegion()}
                 </tr>
               )}
-              {/* Comp2 Y2&Y3 row */}
               {showComp2Y2 && (
                 <tr className="bg-purple-50/20">
                   <td className="py-2 pr-2 text-gray-600">{c2y2Info!.sheet}</td>
@@ -359,7 +380,7 @@ function V3Table({
                   <td className="py-2 pr-2 text-gray-800 max-w-[130px] truncate">{c2y2Info!.name}</td>
                   <td className="py-2 pr-2 text-gray-600 text-xs">{c2y2Info!.qs}</td>
                   <td className="py-2 pr-2">
-                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-fuchsia-100 text-fuchsia-700">{labels.secondarySecondary}</span>
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-fuchsia-100 text-fuchsia-700">C2:Y2&Y3</span>
                   </td>
                   <td className="py-2 pr-2">
                     <span className="text-xs text-red-600 font-medium">{r.missingMonthsComp2Y2Y3.join(', ')}</span>
@@ -369,6 +390,7 @@ function V3Table({
                       {formatQuotaVal(r.quotaValuesComp2Y2Y3[m])}
                     </td>
                   ))}
+                  {renderRegion()}
                 </tr>
               )}
             </Fragment>
